@@ -4,21 +4,17 @@ import argparse
 import re
 import subprocess
 import sys
-import random
+
+DEFAULT_NAME = "bcgovimages/von-image"
+PY_35_VERSION = "3.5.7"
+PY_36_VERSION = "3.6.9"
+PY_DEFAULT_VERSION = PY_35_VERSION
+
 
 VERSIONS = {
-    "1.7-ew": {
-        "version": "1.7-ew-1",
-        "args": {
-            # 1.14.1 release
-            "indy_sdk_url": "https://codeload.github.com/ianco/indy-sdk/tar.gz/4825ab317d541f89142ac108e230d09ff76c9969",
-            "rust_version": "1.37.0",
-            # 0.5.0
-            "indy_crypto_url": "https://codeload.github.com/hyperledger/indy-crypto/tar.gz/c323bd0046e4e7da936ad1682a401c557c74345b",
-        },
-    },
-    "1.8": {
-        "version": "1.8-5",
+    "1.7": {
+        "path": "node-1.7",
+        "version": "node-1.7-0",
         "args": {
             # 1.8.3
             "indy_sdk_url": "https://codeload.github.com/ianco/indy-sdk/tar.gz/26daafc28da10a8347c52fb2d13817301903b75b",
@@ -27,88 +23,29 @@ VERSIONS = {
         },
     },
     "1.9": {
-        "version": "1.9-0",
-        "args": {
-            # 1.9.0
-            "indy_sdk_url": "https://codeload.github.com/hyperledger/indy-sdk/tar.gz/41d97ab1dc9c8e55f9c3f9e95de70da58f5e384a",
-            # 0.1.1
-            "ursa_url": "https://codeload.github.com/hyperledger/ursa/tar.gz/d764981144bce9f5b0f1c085a8ebad222f429690",
-        },
-    },
-    "1.10": {
-        "version": "1.10-0",
-        "args": {
-            # 1.10.1
-            "indy_sdk_url": "https://codeload.github.com/hyperledger/indy-sdk/tar.gz/0718ac0f2979d5c2ae649663c5e78e2f65f35100"
-        },
-    },
-    "1.11": {
-        "path": "1.10",
-        "version": "1.11-0",
-        "args": {
-            # 1.11.0
-            "indy_sdk_url": "https://codeload.github.com/hyperledger/indy-sdk/tar.gz/a583838aad867ad3dbb142b86bd76cadfe294682"
-        },
-    },
-    "1.11.1": {
-        "path": "1.10",
-        "version": "1.11-1",
+        "path": "node-1.9",
+        "version": "node-1.9-4",
         "args": {
             # 1.11.1
             "indy_sdk_url": "https://codeload.github.com/hyperledger/indy-sdk/tar.gz/453edc895f2278f41e04820911d5a946199a44e4",
+            # 0.1.1
+            "ursa_url": "https://codeload.github.com/hyperledger/ursa/tar.gz/d764981144bce9f5b0f1c085a8ebad222f429690",
             "rust_version": "1.37.0",
         },
     },
-    "1.12.0": {
-        "path": "1.10",
-        "version": "1.12-0",
-        "args": {
-            # 1.12.0
-            "indy_sdk_url": "https://codeload.github.com/hyperledger/indy-sdk/tar.gz/55b77ec7b73b7ba4c830290f79ce7e2a37000863",
-            "rust_version": "1.37.0",
-        },
-    },
-    "1.14.1": {
-        "path": "1.10",
-        "version": "1.14-0",
-        "args": {
-            # 1.14.1 release
-            "indy_sdk_url": "https://codeload.github.com/hyperledger/indy-sdk/tar.gz/e02532a575698851196ac0d48aaf7ff4647cb0d0",
-            "rust_version": "1.37.0",
-        },
-    },
-    "1.14.2": {
-        "path": "1.10",
-        "version": "1.14-1",
-        "args": {
-            # 1.14.2 release
-            "indy_sdk_url": "https://codeload.github.com/hyperledger/indy-sdk/tar.gz/19dee23ad1bad04012ecb77ad8ed30113a23694f",
-            "rust_version": "1.37.0",
-        },
-    },
-    "1.15.0": {
-        "path": "1.10",
-        "version": "1.15-0",
+    "1.12": {
+        "path": "node-1.12",
+        "version": "node-1.12-3",
         "args": {
             # 1.15.0 release
             "indy_sdk_url": "https://codeload.github.com/hyperledger/indy-sdk/tar.gz/f85afd2f94959eb59522e5dda160d2c7fdd1a4ba",
+            # 0.3.2
+            "ursa_url": "https://codeload.github.com/hyperledger/ursa/tar.gz/394bcdf1413ac41793e96175d46d745ed6ffd970",
             "rust_version": "1.40.0",
         },
-    },
-    "next-1": {
-        "path": "next",
-        "args": {
-            # 1.14.2 release
-            "indy_sdk_url": "https://codeload.github.com/hyperledger/indy-sdk/tar.gz/19dee23ad1bad04012ecb77ad8ed30113a23694f",
-        },
+        "python_version": PY_36_VERSION,
     },
 }
-
-DEFAULT_NAME = "bcgovimages/von-image"
-PY_35_VERSION = "3.5.7"
-PY_36_VERSION = "3.6.9"
-PY_37_VERSION = "3.7.4"
-PY_DEFAULT_VERSION = PY_36_VERSION
 
 
 parser = argparse.ArgumentParser(description="Generate a von-image Docker image")
@@ -148,13 +85,6 @@ parser.add_argument(
     const=PY_36_VERSION,
     help="build with the default python 3.6 version",
 )
-parser.add_argument(
-    "--py37",
-    dest="python",
-    action="store_const",
-    const=PY_37_VERSION,
-    help="build with the default python 3.7 version",
-)
 parser.add_argument("--python", help="use a specific python version")
 parser.add_argument("--push", action="store_true", help="push the resulting image")
 parser.add_argument(
@@ -167,16 +97,6 @@ parser.add_argument(
     help="produce a release build of libindy",
 )
 parser.add_argument("--platform", help="build for a specific platform")
-parser.add_argument(
-    "--postgres",
-    action="store_true",
-    help="force re-install of postgres plug-in from github",
-)
-parser.add_argument(
-    "--vonx",
-    action="store_true",
-    help="force re-install of von-x from library in requirements-vonx.txt",
-)
 parser.add_argument(
     "--s2i", action="store_true", help="build the s2i image for this version"
 )
@@ -191,10 +111,7 @@ ver = VERSIONS[args.version]
 py_ver = args.python or ver.get("python_version", PY_DEFAULT_VERSION)
 
 target = ver.get("path", args.version)
-if target.startswith("next"):
-    dockerfile = target + "/Dockerfile"
-else:
-    dockerfile = target + "/Dockerfile.ubuntu"
+dockerfile = target + "/Dockerfile.ubuntu"
 if args.file:
     dockerfile = args.file
 
@@ -203,11 +120,7 @@ tag_name = args.name
 if tag:
     tag_name, tag_version = tag.split(":", 2)
 else:
-    if target.startswith("next"):
-        pfx = ""
-    else:
-        pfx = "py" + py_ver[0:1] + py_ver[2:3] + "-"
-    tag_version = pfx + ver.get("version", args.version)
+    tag_version = ver.get("version", args.version)
     if args.debug:
         tag_version += "-debug"
     tag = tag_name + ":" + tag_version
@@ -256,15 +169,6 @@ if args.squash:
 cmd_args.extend(["-t", tag])
 if args.platform:
     cmd_args.extend(["--platform", args.platform])
-if args.postgres:
-    cmd_args.extend(
-        ["--build-arg", "CACHEBUSTPX=" + str(random.randint(100000, 999999)) + ""]
-    )
-if args.vonx:
-    cmd_args.extend(
-        ["--build-arg", "CACHEBUSTVX=" + str(random.randint(100000, 999999)) + ""]
-    )
-    cmd_args.extend(["--build-arg", "VONX_FORCE=True"])
 
 cmd_args.append(target)
 cmd = ["docker", "build"] + cmd_args
